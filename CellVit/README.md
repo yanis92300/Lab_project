@@ -1,117 +1,22 @@
-[![Python 3.9.7](https://img.shields.io/badge/python-3.9.7-blue.svg)](https://www.python.org/downloads/release/python-360/)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Flake8 Status](./reports/flake8/flake8-badge.svg)](./reports/flake8/index.html)
-[![CodeFactor](https://www.codefactor.io/repository/github/tio-ikim/cellvit/badge)](https://www.codefactor.io/repository/github/tio-ikim/cellvit)
-<img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=flat-square&logo=Pytorch&logoColor=white"/></a>
-[![Visitors](https://api.visitorbadge.io/api/visitors?path=https%3A%2F%2Fgithub.com%2FTIO-IKIM%2FCellViT&label=Visitors&countColor=%23263759&style=flat)](https://visitorbadge.io/status?path=https%3A%2F%2Fgithub.com%2FTIO-IKIM%2FCellViT)
-[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/cellvit-vision-transformers-for-precise-cell/panoptic-segmentation-on-pannuke)](https://paperswithcode.com/sota/panoptic-segmentation-on-pannuke?p=cellvit-vision-transformers-for-precise-cell)
-___
-<p align="center">
-  <img src="./docs/figures/banner.png"/>
-</p>
+# Lab-project : using Segment Anything (SAM) to segment cancer cells in H&E Images
+This repository contains the code implementation of our lab project which consists of investigating how [SAM](https://github.com/facebookresearch/segment-anything.git) can be leveraged for automatic cancer cell detection in H&E images. 
 
-___
+Specifically, our contribution is two-fold:
+1. We show how te performances of SOTA model [Hovernet](https://github.com/vqdang/hover_net.git) can be improved with SAM used as a post-processing 
+2. We combine the efforts made in the works of [MedSAM](https://github.com/bowang-lab/MedSAM.git) and [CellViT](https://github.com/TIO-IKIM/CellViT.git) to slightly improve the SOTA performances in automated instance segmentation of cell nuclei in digitized tissue samples. More specifically, we use the weights of the ViT encoder from MedSAM in the training of CellViT.
 
-# CellViT: Vision Transformers for Precise Cell Segmentation and Classification
-<div align="center">
-
-[Key Features](#key-features) • [Installation](#installation) • [Usage](#usage) • [Training](#training) • [Inference](#inference) • [Examples](#examples) • [Roadmap](#Roadmap) • [Citation](#Citation)
-
-</div>
-
----
-
-> **Update 08.08.2023**:
->
-> :bangbang: We fixed a severe training bug and uploaded new checkpoints. Please make sure to pull all changes and redownload your CellViT checkpoints to get the best results :bangbang:
->
-> :ballot_box_with_check: Improved reproducability by providing config and log files for best models (CellViT-SAM-H and CellViT-256) and adopted PanNuke inference script for an easier evaluation
->
-> :ballot_box_with_check: Inference speed improved by x100 for postprocessing, added new preprocessing with CuCIM speedup
->
-> :ballot_box_with_check: Fixed bug in postprocessing that may insert doubled cells during cell-detection
->
-> :ballot_box_with_check: Added batch-size and mixed-precision options to inference cli to support RAM limited GPUs
->
-> :ballot_box_with_check: Extended configuration and added sweep configuration
----
-
-*Hörst, F., Rempe, M., Heine, L., Seibold, C., Keyl, J., Baldini, G., Ugurel, S., Siveke, J., Grünwald, B., Egger, J., & Kleesiek, J. (2023). CellViT: Vision Transformers for precise cell segmentation and classification. https://doi.org/10.48550/ARXIV.2306.15350*
-
-This repository contains the code implementation of CellViT, a deep learning-based method for automated instance segmentation of cell nuclei in digitized tissue samples. CellViT utilizes a Vision Transformer architecture and achieves state-of-the-art performance on the [PanNuke](https://warwick.ac.uk/fac/cross_fac/tia/data/pannuke) dataset, a challenging nuclei instance segmentation benchmark.
-
-> **If you intend to use anything from this repo, citation of the original publication given above is necessary**
-
-
-<p align="center">
-  <img src="./docs/figures/network_large.png"/>
-</p>
-
-
-## Key Features
-  - State-of-the-Art Performance: CellViT outperforms existing methods for nuclei instance segmentation by a substantial margin, delivering superior results on the PanNuke dataset:
-    - Mean panoptic quality: 0.51
-    - F1-detection score: 0.83
-  - Vision Transformer Encoder: The project incorporates pre-trained Vision Transformer (ViT) encoders, which are known for their effectiveness in various computer vision tasks. This choice enhances the segmentation performance of CellViT.
-  - U-Net Architecture: CellViT adopts a U-Net-shaped encoder-decoder network structure, allowing for efficient and accurate nuclei instance segmentation. The network architecture facilitates both high-level and low-level feature extraction for improved segmentation results.
-  - Weighted Sampling Strategy: To enhance the performance of CellViT, a novel weighted sampling strategy is introduced. This strategy improves the representation of challenging nuclei instances, leading to more accurate segmentation results.
-  - Fast Inference on Gigapixel WSI: The framework provides fast inference results by utilizing a large inference patch size of $1024 \times 1024$ pixels, in contrast to the conventional $256$-pixel-sized patches. This approach enables efficient analysis of Gigapixel Whole Slide Images (WSI) and generates localizable deep features that hold potential value for downstream tasks. We provide a fast inference pipeline with connection to current Viewing Software such as *QuPath*
-
-
-#### Visualization
-<div align="center">
-
-![Example](docs/figures/qupath.gif)
-
-</div>
-
+Both experiments are made on the [PanNuke](https://warwick.ac.uk/fac/cross_fac/tia/data/pannuke) dataset, a challenging nuclei instance segmentation benchmark.
 
 ## Installation
 
-1. Clone the repository:
-  `git clone https://github.com/TIO-IKIM/CellViT.git`
-2. Create a conda environment with Python 3.9.7 version and install conda requirements: `conda env create -f environment.yml`. You can change the environment name by editing the `name` tag in the environment.yaml file.
-This step is necessary, as we need to install `Openslide` with binary files. This is easier with conda. Otherwise, installation from [source](https://openslide.org/api/python/) needs to be performed and packages installed with pi
-3. Activate environment: `conda activate cellvit_env`
-4. Install torch (>=2.0) for your system, as described [here](https://pytorch.org/get-started/locally/). Preferred version is 2.0, see [optional_dependencies](./optional_dependencies.txt) for help. You can find all version here: https://pytorch.org/get-started/previous-versions/
+Clone the repository: ``` git clone https://github.com/olavdc/Lab-project.git ```
 
-5. Install optional dependencies `pip install -r optional_dependencies.txt` to get a speedup using [NVIDIA-Clara](https://www.nvidia.com/de-de/clara/) and [CuCIM](https://github.com/rapidsai/cucim) for preprocessing during inference. Please select your CUDA versions. Help for installing cucim can be found [online](https://github.com/rapidsai/cucim).
-**Note Error: cannot import name CuImage from cucim**
-If you get this error, install cucim from conda to get all binary files.
-First remove your previous dependeny with `pip uninstall cupy-cuda117` and reinstall with `
-conda install -c rapidsai cucim` inside your conda environment. This process is time consuming, so you should be patient. Also follow their [official guideline](https://github.com/rapidsai/cucim).
+Pip install the requirements : ``` pip install -r requirements. txt ```
 
-### FAQ: Environment problems
+## Usage
 
-**ResolvePackageNotFound: -gcc**
-
-- Fix: Comment out the gcc package in the environment.yml file
-
-**ResolvePackageNotFound: -libtiff==4.5.0=h6adf6a1_2, -openslide==3.4.1=h7773abc_6**
-
-- Fix: Remove the version hash from environment.yml file, such that:
-  ```yaml
-  ...
-  dependencies:
-    ...
-    - libtiff=4.5.0
-    - openslide=3.4.1
-  
-  pip:
-  ...
-  ```
-
-**PyDantic Validation Errors for the CLI**
-
-Please install the pydantic version specified (`pydantic==1.10.4`), otherwise validation errors could occur for the CLI.
-
-## Usage:
-
-### Project Structure
-
-We are currently using the following folder structure:
-
-```bash
+### Project structure
+```
 ├── base_ml               # Basic Machine Learning Code: CLI, Trainer, Experiment, ...
 ├── cell_segmentation     # Cell Segmentation training and inference files
 │   ├── datasets          # Datasets (PyTorch)
@@ -132,247 +37,254 @@ We are currently using the following folder structure:
 ├── preprocessing         # Preprocessing code
 │   └── patch_extraction  # Code to extract patches from WSI
 ```
+### Pannuke dataset prepration
 
+To preprocess the Pannuke dataset in order to have the right input for the model, it is necessary to convert the Pannuke dataset which is originally in the following format:
 
+```
+├── fold0
+│   ├── images.npy
+│   ├── masks.npy
+│   └── types.npy
+├── fold1
+│   ├── images.npy
+│   ├── masks.npy
+│   └── types.npy
+└── fold2
+    ├── images.npy
+    ├── masks.npy
+    └── types.npy
+```
+into a dataset in the following format which is more suitable for multithreading and the application of data augmentation:
+
+```
+├── fold0
+│   ├── cell_count.csv      # cell-count for each image to be used in sampling
+│   ├── images              # H&E Image for each sample as .png files
+│   ├── images
+│   │   ├── 0_0.png
+│   │   ├── 0_1.png
+│   │   ├── 0_2.png
+...
+│   ├── labels              # label as .npy arrays for each sample
+│   │   ├── 0_0.npy
+│   │   ├── 0_1.npy
+│   │   ├── 0_2.npy
+...
+│   └── types.csv           # csv file with type for each image
+├── fold1
+│   ├── cell_count.csv
+│   ├── images
+│   │   ├── 1_0.png
+...
+│   ├── labels
+│   │   ├── 1_0.npy
+...
+│   └── types.csv
+├── fold2
+│   ├── cell_count.csv
+│   ├── images
+│   │   ├── 2_0.png
+...  
+│   ├── labels  
+│   │   ├── 2_0.npy
+...  
+│   └── types.csv  
+├── dataset_config.yaml     # dataset config with dataset information
+└── weight_config.yaml      # config file for our sampling
+```
+
+In order to convert the data into the correct format, we invite you to run the following commands from the directory (~/CellViT/cell_segmentation/dataset):: 
+
+```
+python prepare_pannuke.py --input_path INPUT_PATHv--output_path OUPUT_PATH
+
+required named arguments:
+--input_path INPUT_PATH original Pannuke dataset path
+--output_path OUPUT_PATH processed Pannuke dataset path
+```
 ### Training
-The CLI for a ML-experiment to train the CellViT-Network is as follows (here the [```run_cellvit.py```](cell_segmentation/run_cellvit.py) script is used):
-```bash
-usage: run_cellvit.py [-h] --config CONFIG [--gpu GPU] [--sweep | --agent AGENT | --checkpoint CHECKPOINT]
 
-Start an experiment with given configuration file.
+#### Training from scratch
+
+To replicate the results presented in our report from scratch, you will first need to download the weights of the classical SAM encoder wieghts (i.e. SAM-ViT-B) and the MedSAM encoder weights (i.e. MedSAM-ViT-B) , which you can find at this [link](https://drive.google.com/drive/folders/1HKZUDm1SZejdVYZKlbb8ufsACjfx8Pcd?usp=drive_link)
+
+Defining which encoder weights (i.e., SAM-ViT-B or MedSAM-ViT-B) to use during the training of CellVit will be done by writing a config.yaml file, in which you will need to specify the desired encoder weights for training. The configuration file should have the following format, and it is under the "pretrained_encoder" subsection of the "model" section where you should define which encoder weights to use:
+
+```
+logging:
+  mode: online
+  project: Cell-Segmentation
+  notes: CellViT-SAM-H
+  log_dir: ~/CellViT/cell_segmentation/experiments/ # Directory where you want the logs to be saved
+  log_comment: CellViT-SAM-B
+  tags:
+  - Fold-1
+  - SAM-H
+  wandb_dir: ./CellViT/wandb_results/
+  level: Debug
+  group: CellViT-SAM-H
+random_seed: 19
+gpu: 0
+data:
+  dataset: PanNuke
+  dataset_path: ~/CellViT/configs/datasets/PanNuke # Direcotry where we can find the preprocessed Pannuke dataset
+  train_folds:
+  - 0
+  val_folds:
+  - 1
+  test_folds:
+  - 2
+  num_nuclei_classes: 6
+  num_tissue_classes: 19
+model:
+  backbone: SAM-B
+  pretrained_encoder: ~/CellViT/SAM_ViT_B.pth # Here we precise which encoder weights we want to use:
+                                                                            (i) if you want the classical SAM encoder weights: use SAM_ViT_B.pth
+                                                                            (ii) if you want to use the MedSAM encoder wiehts: use MEDSAM_ViT_B.pth
+  shared_skip_connections: true
+loss:
+  nuclei_binary_map:
+    focaltverskyloss:
+      loss_fn: FocalTverskyLoss
+      weight: 1
+    dice:
+      loss_fn: dice_loss
+      weight: 1
+  hv_map:
+    mse:
+      loss_fn: mse_loss_maps
+      weight: 2.5
+    msge:
+      loss_fn: msge_loss_maps
+      weight: 8
+  nuclei_type_map:
+    bce:
+      loss_fn: xentropy_loss
+      weight: 0.5
+    dice:
+      loss_fn: dice_loss
+      weight: 0.2
+    mcfocaltverskyloss:
+      loss_fn: MCFocalTverskyLoss
+      weight: 0.5
+      args:
+        num_classes: 6
+  tissue_types:
+    ce:
+      loss_fn: CrossEntropyLoss
+      weight: 0.1
+training:
+  drop_rate: 0
+  attn_drop_rate: 0.1
+  drop_path_rate: 0.1
+  batch_size: 8
+  epochs: 40 # To change if you have the necessary hardware 
+  optimizer: AdamW
+  early_stopping_patience: 130
+  scheduler:
+    scheduler_type: exponential
+    hyperparameters:
+      gamma: 0.85
+  optimizer_hyperparameter:
+    betas:
+    - 0.85
+    - 0.95
+    lr: 0.0003
+    weight_decay: 0.0001
+  unfreeze_epoch: 25
+  sampling_gamma: 0.85
+  sampling_strategy: cell+tissue
+  mixed_precision: true
+transformations:
+  randomrotate90:
+    p: 0.5
+  horizontalflip:
+    p: 0.5
+  verticalflip:
+    p: 0.5
+  downscale:
+    p: 0.15
+    scale: 0.5
+  blur:
+    p: 0.2
+    blur_limit: 10
+  gaussnoise:
+    p: 0.25
+    var_limit: 50
+  colorjitter:
+    p: 0.2
+    scale_setting: 0.25
+    scale_color: 0.1
+  superpixels:
+    p: 0.1
+  zoomblur:
+    p: 0.1
+  randomsizedcrop:
+    p: 0.1
+  elastictransform:
+    p: 0.2
+  normalize:
+    mean:
+    - 0.5
+    - 0.5
+    - 0.5
+    std:
+    - 0.5
+    - 0.5
+    - 0.5
+eval_checkpoint : best_checkpoint
+run_sweep: false
+agent: null
+dataset_config:
+  tissue_types:
+    Adrenal_gland: 0
+    Bile-duct: 1
+    Bladder: 2
+    Breast: 3
+    Cervix: 4
+    Colon: 5
+    Esophagus: 6
+    HeadNeck: 7
+    Kidney: 8
+    Liver: 9
+    Lung: 10
+    Ovarian: 11
+    Pancreatic: 12
+    Prostate: 13
+    Skin: 14
+    Stomach: 15
+    Testis: 16
+    Thyroid: 17
+    Uterus: 18
+  nuclei_types:
+    Background: 0
+    Neoplastic: 1
+    Inflammatory: 2
+    Connective: 3
+    Dead: 4
+    Epithelial: 5
+```
+Then, once you are in the directory (~/CellViT/cell_segmentation), execute the following command line:
+```
+python run_cellvit.py --config GONIF [--gpu GPU] 
 
 optional arguments:
-  -h, --help            show this help message and exit
-  --gpu GPU             Cuda-GPU ID (default: None)
-  --sweep               Starting a sweep. For this the configuration file must be structured according to WandB sweeping. Compare
-                        https://docs.wandb.ai/guides/sweeps and https://community.wandb.ai/t/nested-sweep-configuration/3369/3 for further
-                        information. This parameter cannot be set in the config file! (default: False)
-  --agent AGENT         Add a new agent to the sweep. Please pass the sweep ID as argument in the way entity/project/sweep_id, e.g.,
-                        user1/test_project/v4hwbijh. The agent configuration can be found in the WandB dashboard for the running sweep in
-                        the sweep overview tab under launch agent. Just paste the entity/project/sweep_id given there. The provided config
-                        file must be a sweep config file.This parameter cannot be set in the config file! (default: None)
-  --checkpoint CHECKPOINT
-                        Path to a PyTorch checkpoint file. The file is loaded and continued to train with the provided settings. If this is
-                        passed, no sweeps are possible. This parameter cannot be set in the config file! (default: None)
-
+  --gpu GPU    Cuda-GPU ID (default: None)
 required named arguments:
-  --config CONFIG       Path to a config file (default: None)
+  --config CONFIG    Path to a config file (default: None)
 ```
+#### Training from a checkpoint
 
-The important file is the configuration file, in which all paths are set, the model configuration is given and the hyperparameters or sweeps are defined. For each specific run file, there exists an example file in the [`./configs/examples/cell_segmentation`](configs/examples/cell_segmentation) folder with the same naming as well as a configuration file that explains how to run WandB sweeps for hyperparameter search. All metrics defined in your trainer are logged to WandB. The WandB configuration needs to be set up in the configuration file, but also turned off by the user.
+To continue training from a previously trained checkpoint, it will first be necessary to download the training checkpoint according to the experiment you are conducting. In the case of experimenting with the classic SAM encoder, download the weight checkpoint_epoch_40_SAM_ViT_B.pth, and if you are experimenting with the MedSAM encoder, download the weight checkpoint_epoch_40_MEDSAM_ViT_B.pth from this [link](https://drive.google.com/drive/folders/1PfB0x-tqec5cAI74xydi3znBO0Eve1TI?usp=sharing). Make sure you specify the appropriate encoder weights in your config.yaml file and execute the following command from the directory (~/CellViT/cell_segmentation):
 
-An example config file is given [here](configs/examples/cell_segmentation/train_cellvit.yaml) with explanations [here](docs/readmes/example_train_config.md).
-For sweeps, we provide a sweep example file [`train_cellvit_sweep.yaml`](/configs/examples/cell_segmentation/train_cellvit_sweep.yaml).
-
-**Pre-trained ViT models** for training initialization can be downloaded from Google Drive: [ViT-Models](https://drive.google.com/drive/folders/1zFO4bgo7yvjT9rCJi_6Mt6_07wfr0CKU?usp=sharing). Please check out the corresponding licenses before distribution and further usage! Note: We just used the teacher models for ViT-256.
-
-:exclamation: If your training crashes at some point, you can continue from a checkpoint
-
-
-#### Dataset preparation
-We use a customized dataset structure for the PanNuke and the MoNuSeg dataset.
-The dataset structures are explained in [pannuke.md](docs/readmes/pannuke.md) and [monuseg.md](docs/readmes/monuseg.md) documentation files.
-We also provide preparation scripts in the [`cell_segmentation/datasets/`](cell_segmentation/datasets/) folder.
-
-#### Evaluation
-In our paper, we did not (!) use early stopping, but rather train all models for 130 to eliminate selection bias but have the largest possible database for training. Therefore, evaluation neeeds to be performed with the `latest_checkpoint.pth` model and not the best early stopping model.
-We provide to script to create evaluation results: [`inference_cellvit_experiment.py`](cell_segmentation/inference/inference_cellvit_experiment.py) for PanNuke and [`inference_cellvit_monuseg.py`](cell_segmentation/inference/inference_cellvit_monuseg.py) for MoNuSeg.
-
-> :exclamation: We recently adapted the evaluation code and added a tag to the config files to select which checkpoint needs to be used. Please make sure to use the right checkpoint and select the appropriate dataset magnification.
-
-### Inference
-
-Model checkpoints can be downloaded here:
-
-- [CellViT-SAM-H](https://drive.google.com/uc?export=download&id=1MvRKNzDW2eHbQb5rAgTEp6s2zAXHixRV) 🚀
-- [CellViT-256](https://drive.google.com/uc?export=download&id=1tVYAapUo1Xt8QgCN22Ne1urbbCZkah8q)
-- [CellViT-SAM-H-x20](https://drive.google.com/uc?export=download&id=1wP4WhHLNwyJv97AK42pWK8kPoWlrqi30)
-- [CellViT-256-x20](https://drive.google.com/uc?export=download&id=1w99U4sxDQgOSuiHMyvS_NYBiz6ozolN2)
-
-License: [Apache 2.0 with Commons Clause](./LICENSE)
-
-Proved checkpoints have been trained on 90% of the data from all folds with the settings described in the publication.
-
-##### Steps
-The following steps are necessary for preprocessing:
-1. Prepare WSI with our preprocessing pipeline
-2. Run inference with the [`inference/cell_detection.py`](/cell_segmentation/inference/cell_detection.py) script
-
-Results are stored at preprocessing locations
-
-#### 1. Preprocessing
-In our Pre-Processing pipeline, we are able to extract quadratic patches from detected tissue areas, load annotation files (`.json`) and apply color normlizations. We make use of the popular [OpenSlide](https://openslide.org/) library, but extended it with the [RAPIDS cuCIM](https://github.com/rapidsai/cucim) framework for an x8 speedup in patch-extraction. The documentation for the preprocessing can be found [here](/docs/readmes/preprocessing.md).
-
-Preprocessing is necessary to extract patches for our inference pipeline. We use squared patches of size 1024 pixels with an overlap of 64 px.
-
-**Please make sure that you select the following properties for our CellViT inference**
-| Parameter     	| Value 	|
-|---------------	|-------	|
-| patch_size    	| 1024  	|
-| patch_overlap 	| 6.25  	|
-
-#### Resulting Dataset Structure
-In general, the folder structure for a preprocessed dataset looks like this:
-The aim of pre-processing is to create one dataset per WSI in the following structure:
-```bash
-WSI_Name
-├── annotation_masks      # thumbnails of extracted annotation masks
-│   ├── all_overlaid.png  # all with same dimension as the thumbnail
-│   ├── tumor.png
-│   └── ...  
-├── context               # context patches, if extracted
-│   ├── 2                 # subfolder for each scale
-│   │   ├── WSI_Name_row1_col1_context_2.png
-│   │   ├── WSI_Name_row2_col1_context_2.png
-│   │   └── ...
-│   └── 4
-│   │   ├── WSI_Name_row1_col1_context_2.png
-│   │   ├── WSI_Name_row2_col1_context_2.png
-│   │   └── ...
-├── masks                 # Mask (numpy) files for each patch -> optional folder for segmentation
-│   ├── WSI_Name_row1_col1.npy
-│   ├── WSI_Name_row2_col1.npy
-│   └── ...
-├── metadata              # Metadata files for each patch
-│   ├── WSI_Name_row1_col1.yaml
-│   ├── WSI_Name_row2_col1.yaml
-│   └── ...
-├── patches               # Patches as .png files
-│   ├── WSI_Name_row1_col1.png
-│   ├── WSI_Name_row2_col1.png
-│   └── ...
-├── thumbnails            # Different kind of thumbnails
-│   ├── thumbnail_mpp_5.png
-│   ├── thumbnail_downsample_32.png
-│   └── ...
-├── tissue_masks          # Tissue mask images for checking
-│   ├── mask.png          # all with same dimension as the thumbnail
-│   ├── mask_nogrid.png
-│   └── tissue_grid.png
-├── mask.png              # tissue mask with green grid  
-├── metadata.yaml         # WSI metdata for patch extraction
-├── patch_metadata.json   # Patch metadata of WSI merged in one file
-└── thumbnail.png         # WSI thumbnail
 ```
-
-The cell detection and segmentation results are stored in a newly created `cell_detection` folder for each WSI.
-
-#### 2. Cell detection script
-If the data is prepared, use the [`cell_detection.py`](inference/cell_detection.py) script inside the `cell_segmentation/inference` folder to perform inference:
-
-```bash
-usage: cell_detection.py --model MODEL [--gpu GPU] [--magnification MAGNIFICATION] [--mixed_precision]
-                          [--batch_size BATCH_SIZE] [--outdir_subdir OUTDIR_SUBDIR]
-                          [--geojson] {process_wsi,process_dataset} ...
-
-Perform CellViT inference for given run-directory with model checkpoints and logs
+python run_cellvit.py --config GONIF [--gpu GPU] --checkpoint CHECKPOINT
 
 optional arguments:
-  -h, --help            show this help message and exit
-  --gpu GPU             Cuda-GPU ID for inference. Default: 0 (default: 0)
-  --magnification MAGNIFICATION
-                        Network magnification. Is used for checking patch magnification such that
-                        we use the correct resolution for network. Default: 40 (default: 40)
-  --mixed_precision     Whether to use mixed precision for inference. Default: False (default: False)
-  --batch_size BATCH_SIZE
-                        Inference batch-size. Default: 8 (default: 8)
-  --outdir_subdir OUTDIR_SUBDIR
-                        If provided, a subdir with the given name is created in the cell_detection folder
-                        where the results are stored. Default: None (default: None)
-  --geojson             Set this flag to export results as additional geojson files for
-                        loading them into Software like QuPath. (default: False)
-
+--gpu GPU    Cuda-GPU ID (default: None)
+--checkpoint CHECKPOINT    Path to where tou stored the checkpoints
 required named arguments:
-  --model MODEL         Model checkpoint file that is used for inference (default: None)
-
-subcommands:
-  Main run command for either performing inference on single WSI-file or on whole dataset
-
-  {process_wsi,process_dataset}
-```
-##### Single WSI
-For processing a single WSI file, you need to select the `process_wsi` (`python3 cell_detection.py process_wsi`) subcommand with the following structure:
-```bash
-usage: cell_detection.py process_wsi --wsi_path WSI_PATH --patched_slide_path PATCHED_SLIDE_PATH
-
-Process a single WSI file
-
-arguments:
-  -h, --help            show this help message and exit
-  --wsi_path WSI_PATH   Path to WSI file
-  --patched_slide_path PATCHED_SLIDE_PATH
-                        Path to patched WSI file (specific WSI file, not parent path of patched slide dataset)
-```
-##### Multiple WSI
-To process an entire dataset, select `process_dataset` (`python3 cell_detection.py process_dataset`):
-```bash
-usage: cell_detection.py process_dataset  --wsi_paths WSI_PATHS --patch_dataset_path PATCH_DATASET_PATH [--filelist FILELIST] [--wsi_extension WSI_EXTENSION]
-
-Process a whole dataset
-
-arguments:
-  -h, --help            show this help message and exit
-  --wsi_paths WSI_PATHS
-                        Path to the folder where all WSI are stored
-  --patch_dataset_path PATCH_DATASET_PATH
-                        Path to the folder where the patch dataset is stored
-  --filelist FILELIST   Filelist with WSI to process. Must be a .csv file with one row denoting the filenames (named 'Filename').
-                        If not provided, all WSI files with given ending in the WSI folder are processed. (default: 'None')
-  --wsi_extension WSI_EXTENSION
-                        The extension types used for the WSI files, see configs.python.config (WSI_EXT). (default: 'svs')
+--config CONFIG    Path to a config file (default: None)
 ```
 
-#### 3. Example
-We provide an example TCGA file to show the performance and usage of our algorithms.
-Files and scripts can be found in the [example](example) folder.
-The TCGA slide must be downloaded here: https://portal.gdc.cancer.gov/files/f9147f06-2902-4a64-b293-5dbf9217c668.
-Please place this file in the example folder.
-
-**Preprocessing:**
-```bash
-python3 ./preprocessing/patch_extraction/main_extraction.py --config ./example/preprocessing_example.yaml
-```
-
-Output is stored inside `./example/output/preprocessing`
-
-**Inference:**
-Download the models and store them in `./models/pretrained` or on your preferred location and change the model parameter.
-
-```bash
-python3 ./cell_segmentation/inference/cell_detection.py \
-  --model ./models/pretrained/CellViT/CellViT-SAM-H-x40.pth\
-  --gpu 0 \
-  --geojson \
-  process_wsi \
-  --wsi_path ./example/TCGA-V5-A7RE-11A-01-TS1.57401526-EF9E-49AC-8FF6-B4F9652311CE.svs \
-  --patched_slide_path ./example/output/preprocessing/TCGA-V5-A7RE-11A-01-TS1.57401526-EF9E-49AC-8FF6-B4F9652311CE
-```
-You can import your results (.geojson files) into [QuPath](https://qupath.github.io/). The results should look like this:
-<div align="center">
-
-![Example](docs/figures/example.gif)
-
-</div>
-
-## Roadmap
-
-### Inference Speed
-We are currently optimizing the inference speed. Code will be updated in a few weeks.
-
-### Docker Image (Coming Soon) 🐳
-
-In a future release, we will provide a Docker image that contains all the necessary dependencies and configurations pre-installed. This Docker image will ensure reproducibility and simplify the setup process, allowing for easy installation and usage of the project.
-
-Stay tuned for updates on the availability of the Docker image, as we are actively working on providing this convenient packaging option for our project. 🚀
-
-## Citation
-```latex
-@misc{hörst2023cellvit,
-      title={CellViT: Vision Transformers for Precise Cell Segmentation and Classification},
-      author={Fabian Hörst and Moritz Rempe and Lukas Heine and Constantin Seibold and Julius Keyl and Giulia Baldini and Selma Ugurel and Jens Siveke and Barbara Grünwald and Jan Egger and Jens Kleesiek},
-      year={2023},
-      eprint={2306.15350},
-      archivePrefix={arXiv},
-      primaryClass={eess.IV}
-}
-```
