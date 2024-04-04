@@ -1,3 +1,9 @@
+## Installation
+
+Clone the repository: `git clone https://github.com/yanis92300/Lab_project.git`
+
+Pip install the requirements : `pip install -r requirements. txt`
+
 ## Usage
 
 ### Project structure
