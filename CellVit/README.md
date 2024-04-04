@@ -1,21 +1,7 @@
-# Lab-project : using Segment Anything (SAM) to segment cancer cells in H&E Images
-This repository contains the code implementation of our lab project which consists of investigating how [SAM](https://github.com/facebookresearch/segment-anything.git) can be leveraged for automatic cancer cell detection in H&E images. 
-
-Specifically, our contribution is two-fold:
-1. We show how te performances of SOTA model [Hovernet](https://github.com/vqdang/hover_net.git) can be improved with SAM used as a post-processing 
-2. We combine the efforts made in the works of [MedSAM](https://github.com/bowang-lab/MedSAM.git) and [CellViT](https://github.com/TIO-IKIM/CellViT.git) to slightly improve the SOTA performances in automated instance segmentation of cell nuclei in digitized tissue samples. More specifically, we use the weights of the ViT encoder from MedSAM in the training of CellViT.
-
-Both experiments are made on the [PanNuke](https://warwick.ac.uk/fac/cross_fac/tia/data/pannuke) dataset, a challenging nuclei instance segmentation benchmark.
-
-## Installation
-
-Clone the repository: ``` git clone https://github.com/olavdc/Lab-project.git ```
-
-Pip install the requirements : ``` pip install -r requirements. txt ```
-
 ## Usage
 
 ### Project structure
+
 ```
 ├── base_ml               # Basic Machine Learning Code: CLI, Trainer, Experiment, ...
 ├── cell_segmentation     # Cell Segmentation training and inference files
@@ -37,6 +23,7 @@ Pip install the requirements : ``` pip install -r requirements. txt ```
 ├── preprocessing         # Preprocessing code
 │   └── patch_extraction  # Code to extract patches from WSI
 ```
+
 ### Pannuke dataset prepration
 
 To preprocess the Pannuke dataset in order to have the right input for the model, it is necessary to convert the Pannuke dataset which is originally in the following format:
@@ -55,6 +42,7 @@ To preprocess the Pannuke dataset in order to have the right input for the model
     ├── masks.npy
     └── types.npy
 ```
+
 into a dataset in the following format which is more suitable for multithreading and the application of data augmentation:
 
 ```
@@ -85,16 +73,16 @@ into a dataset in the following format which is more suitable for multithreading
 │   ├── cell_count.csv
 │   ├── images
 │   │   ├── 2_0.png
-...  
-│   ├── labels  
+...
+│   ├── labels
 │   │   ├── 2_0.npy
-...  
-│   └── types.csv  
+...
+│   └── types.csv
 ├── dataset_config.yaml     # dataset config with dataset information
 └── weight_config.yaml      # config file for our sampling
 ```
 
-In order to convert the data into the correct format, we invite you to run the following commands from the directory (~/CellViT/cell_segmentation/dataset):: 
+In order to convert the data into the correct format, we invite you to run the following commands from the directory (~/CellViT/cell_segmentation/dataset)::
 
 ```
 python prepare_pannuke.py --input_path INPUT_PATHv--output_path OUPUT_PATH
@@ -103,6 +91,7 @@ required named arguments:
 --input_path INPUT_PATH original Pannuke dataset path
 --output_path OUPUT_PATH processed Pannuke dataset path
 ```
+
 ### Training
 
 #### Training from scratch
@@ -179,7 +168,7 @@ training:
   attn_drop_rate: 0.1
   drop_path_rate: 0.1
   batch_size: 8
-  epochs: 40 # To change if you have the necessary hardware 
+  epochs: 40 # To change if you have the necessary hardware
   optimizer: AdamW
   early_stopping_patience: 130
   scheduler:
@@ -265,15 +254,18 @@ dataset_config:
     Dead: 4
     Epithelial: 5
 ```
+
 Then, once you are in the directory (~/CellViT/cell_segmentation), execute the following command line:
+
 ```
-python run_cellvit.py --config GONIF [--gpu GPU] 
+python run_cellvit.py --config GONIF [--gpu GPU]
 
 optional arguments:
   --gpu GPU    Cuda-GPU ID (default: None)
 required named arguments:
   --config CONFIG    Path to a config file (default: None)
 ```
+
 #### Training from a checkpoint
 
 To continue training from a previously trained checkpoint, it will first be necessary to download the training checkpoint according to the experiment you are conducting. In the case of experimenting with the classic SAM encoder, download the weight checkpoint_epoch_40_SAM_ViT_B.pth, and if you are experimenting with the MedSAM encoder, download the weight checkpoint_epoch_40_MEDSAM_ViT_B.pth from this [link](https://drive.google.com/drive/folders/1PfB0x-tqec5cAI74xydi3znBO0Eve1TI?usp=sharing). Make sure you specify the appropriate encoder weights in your config.yaml file and execute the following command from the directory (~/CellViT/cell_segmentation):
@@ -287,4 +279,3 @@ optional arguments:
 required named arguments:
 --config CONFIG    Path to a config file (default: None)
 ```
-
